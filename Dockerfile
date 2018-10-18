@@ -1,6 +1,6 @@
 FROM nathonfowlie/centos-jre
 
-MAINTAINER arcseldon <arcseldon@gmail.com>
+LABEL arcseldon <arcseldon@gmail.com>
 
 USER root
 ENV ES_VERSION=2.3.5 \
@@ -12,10 +12,10 @@ RUN  yum -y install wget
 RUN  yum -y install which
 #RUN apk add --quiet --no-progress --no-cache nodejs \
   
-#RUN adduser -D elasticsearch
+RUN adduser  elasticsearch
 
-#USER elasticsearch
-
+USER elasticsearch
+  
 WORKDIR /home/elasticsearch
 
 RUN wget -q -O - http://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/${ES_VERSION}/elasticsearch-${ES_VERSION}.tar.gz \
@@ -29,8 +29,10 @@ RUN wget -q -O - http://download.elastic.co/elasticsearch/release/org/elasticsea
  && ln -s $(which npm) kibana/node/bin/npm \
  && ./elasticsearch/bin/plugin install license \
  && ./elasticsearch/bin/plugin install marvel-agent \ 
- && ./kibana/bin/kibana plugin --install elasticsearch/marvel/latest 
-# && ./kibana/bin/kibana plugin --install elastic/sense 
+ && ./kibana/bin/kibana plugin --install elasticsearch/marvel/latest \ 
+ && ./kibana/bin/kibana plugin --install elastic/sense 
+
+ENV ES_JAVA_OPTS "-Xms1000m -Xmx1000m"
 
 CMD elasticsearch/bin/elasticsearch --es.logger.level=OFF --network.host=0.0.0.0 & kibana/bin/kibana -Q
 
