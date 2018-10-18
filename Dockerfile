@@ -5,18 +5,19 @@ LABEL arcseldon <arcseldon@gmail.com>
 USER root
 ENV ES_VERSION=2.3.5 \
     KIBANA_VERSION=4.5.3
-RUN curl --silent --location https://rpm.nodesource.com/setup_8.x |   bash -
+RUN curl --silent --location https://rpm.nodesource.com/setup_6.x |   bash -
 #RUN curl --silent --location https://rpm.nodesource.com/setup_10.x |  bash -
 RUN  yum -y install nodejs
 RUN  yum -y install wget
 RUN  yum -y install which
 #RUN apk add --quiet --no-progress --no-cache nodejs \
   
-RUN adduser  elasticsearch
+#RUN adduser  elasticsearch
 
-USER elasticsearch
+USER root
   
 WORKDIR /home/elasticsearch
+RUN chgrp -R 0 /home/elasticsearch && chmod g+rwX /home/elasticsearch
 
 RUN wget -q -O - http://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/${ES_VERSION}/elasticsearch-${ES_VERSION}.tar.gz \
  |  tar -zx \
