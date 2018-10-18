@@ -2,19 +2,13 @@ FROM nathonfowlie/centos-jre
 
 MAINTAINER arcseldon <arcseldon@gmail.com>
 
-USER root
 ENV ES_VERSION=2.3.5 \
     KIBANA_VERSION=4.5.3
-RUN curl --silent --location https://rpm.nodesource.com/setup_8.x |   bash -
-#RUN curl --silent --location https://rpm.nodesource.com/setup_10.x |  bash -
-RUN  yum -y install nodejs
-RUN  yum -y install wget
-RUN  yum -y install which
-#RUN apk add --quiet --no-progress --no-cache nodejs \
-  
-#RUN adduser -D elasticsearch
 
-#USER elasticsearch
+RUN apk add --quiet --no-progress --no-cache nodejs \
+  && adduser -D elasticsearch
+
+USER elasticsearch
 
 WORKDIR /home/elasticsearch
 
@@ -28,9 +22,9 @@ RUN wget -q -O - http://download.elastic.co/elasticsearch/release/org/elasticsea
  && ln -s $(which node) kibana/node/bin/node \
  && ln -s $(which npm) kibana/node/bin/npm \
  && ./elasticsearch/bin/plugin install license \
- && ./elasticsearch/bin/plugin install marvel-agent \ 
- && ./kibana/bin/kibana plugin --install elasticsearch/marvel/latest 
-# && ./kibana/bin/kibana plugin --install elastic/sense 
+ && ./elasticsearch/bin/plugin install marvel-agent \
+ && ./kibana/bin/kibana plugin --install elasticsearch/marvel/latest \
+ && ./kibana/bin/kibana plugin --install elastic/sense 
 
 CMD elasticsearch/bin/elasticsearch --es.logger.level=OFF --network.host=0.0.0.0 & kibana/bin/kibana -Q
 
