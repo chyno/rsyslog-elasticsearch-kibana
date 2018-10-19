@@ -3,13 +3,16 @@ FROM nathonfowlie/centos-jre
 LABEL arcseldon <arcseldon@gmail.com>
 
 USER root
-ENV ES_VERSION=2.3.5 \
-    KIBANA_VERSION=4.5.3
-RUN curl --silent --location https://rpm.nodesource.com/setup_6.x |   bash -
-#RUN curl --silent --location https://rpm.nodesource.com/setup_10.x |  bash -
-RUN  yum -y install nodejs
+ARG ek_version=6.3.1
+
+#RUN curl --silent --location https://rpm.nodesource.com/setup_6.x |   bash -
 RUN  yum -y install wget
 RUN  yum -y install which
+RUN curl --silent --location https://rpm.nodesource.com/setup_8.x |  bash -
+RUN  yum -y install nodejs
+RUN npm install -g n
+RUN n 8.11.4
+
 #RUN apk add --quiet --no-progress --no-cache nodejs \
   
 #RUN adduser  elasticsearch
@@ -19,22 +22,25 @@ USER root
 WORKDIR /home/elasticsearch
 RUN chgrp -R 0 /home/elasticsearch && chmod g+rwX /home/elasticsearch
 
-RUN wget -q -O - http://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/${ES_VERSION}/elasticsearch-${ES_VERSION}.tar.gz \
+WORKDIR /home/elasticsearch
+
+ENV ES_TMPDIR=/home/elasticsearch/elasticsearch.tmp
+
+RUN wget -q -O - https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${ek_version}.tar.gz \
  |  tar -zx \
- && mv elasticsearch-${ES_VERSION} elasticsearch \
- && wget -q -O - http://download.elastic.co/kibana/kibana/kibana-${KIBANA_VERSION}-linux-x64.tar.gz \
+ && mv elasticsearch-${ek_version} elasticsearch \
+ && mkdir -p ${ES_TMPDIR} \
+ && wget -q -O - https://artifacts.elastic.co/downloads/kibana/kibana-oss-${ek_version}-linux-x86_64.tar.gz \
  |  tar -zx \
- && mv kibana-${KIBANA_VERSION}-linux-x64 kibana \
+ && mv kibana-${ek_version}-linux-x86_64 kibana \
  && rm -f kibana/node/bin/node kibana/node/bin/npm \
  && ln -s $(which node) kibana/node/bin/node \
- && ln -s $(which npm) kibana/node/bin/npm \
- && ./elasticsearch/bin/plugin install license \
- && ./elasticsearch/bin/plugin install marvel-agent \ 
- && ./kibana/bin/kibana plugin --install elasticsearch/marvel/latest \ 
- && ./kibana/bin/kibana plugin --install elastic/sense 
+ && ln -s $(which npm) kibana/node/bin/npm
 
-ENV ES_JAVA_OPTS "-Xms1000m -Xmx1000m"
+RUN sed 's/#network.host: 192.168.0.1/network.host: 0.0.0.0/' /home/elasticsearch/elasticsearch/config/elasticsearch.yml > /home/elasticsearch/elasticsearch/config/elasticsearch.yml.changed \
+&& mv /home/elasticsearch/elasticsearch/config/elasticsearch.yml.changed /home/elasticsearch/elasticsearch/config/elasticsearch.yml
 
-CMD elasticsearch/bin/elasticsearch --es.logger.level=OFF --network.host=0.0.0.0 & kibana/bin/kibana -Q
+CMD sh elasticsearch/bin/elasticsearch -E http.host=0.0.0.0 --quiet & kibana/bin/kibana --host 0.0.0.0 -Q
 
 EXPOSE 9200 5601
+
